@@ -1,4 +1,4 @@
-package model;
+package ru.practicum.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;

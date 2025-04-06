@@ -1,7 +1,7 @@
-package app.client;
+package ru.practicum.client;
 
-import model.EndpointHitDto;
-import model.ViewStats;
+import ru.practicum.model.EndpointHitDto;
+import ru.practicum.model.ViewStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;

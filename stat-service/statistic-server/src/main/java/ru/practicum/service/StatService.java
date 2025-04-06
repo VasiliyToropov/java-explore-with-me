@@ -1,8 +1,8 @@
-package app.service;
+package ru.practicum.service;
 
-import app.model.EndpointHit;
-import model.EndpointHitDto;
-import model.ViewStats;
+import ru.practicum.model.EndpointHit;
+import ru.practicum.model.EndpointHitDto;
+import ru.practicum.model.ViewStats;
 
 import java.util.List;
 

@@ -1,8 +1,8 @@
-package app.controller;
+package ru.practicum.controller;
 
-import app.client.StatClient;
+import ru.practicum.client.StatClient;
 import lombok.RequiredArgsConstructor;
-import model.EndpointHitDto;
+import ru.practicum.model.EndpointHitDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

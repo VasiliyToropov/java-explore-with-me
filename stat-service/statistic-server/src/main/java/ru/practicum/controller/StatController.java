@@ -1,10 +1,10 @@
-package app.controller;
+package ru.practicum.controller;
 
-import app.model.EndpointHit;
-import app.service.StatService;
+import ru.practicum.model.EndpointHit;
+import ru.practicum.service.StatService;
 import lombok.RequiredArgsConstructor;
-import model.EndpointHitDto;
-import model.ViewStats;
+import ru.practicum.model.EndpointHitDto;
+import ru.practicum.model.ViewStats;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,7 +1,7 @@
-package app.repository;
+package ru.practicum.repository;
 
-import app.model.EndpointHit;
-import model.ViewStats;
+import ru.practicum.model.EndpointHit;
+import ru.practicum.model.ViewStats;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface StatRepository extends JpaRepository<EndpointHit, Long> {
 
-    @Query("SELECT new model.ViewStats(e.app, e.uri, COUNT(DISTINCT e.ip)) " +
+    @Query("SELECT new ru.practicum.model.ViewStats(e.app, e.uri, COUNT(DISTINCT e.ip)) " +
             "FROM EndpointHit e " +
             "WHERE e.timestamp BETWEEN :startTime AND :endTime " +
             "AND (:uris IS NULL OR e.uri IN :uris) " +
@@ -20,7 +20,7 @@ public interface StatRepository extends JpaRepository<EndpointHit, Long> {
             "ORDER BY COUNT(DISTINCT e.ip) DESC")
     public List<ViewStats> getStatsUnique(LocalDateTime startTime, LocalDateTime endTime, List<String> uris);
 
-    @Query("SELECT new model.ViewStats(e.app, e.uri, COUNT(e)) " +
+    @Query("SELECT new ru.practicum.model.ViewStats(e.app, e.uri, COUNT(e)) " +
             "FROM EndpointHit e " +
             "WHERE e.timestamp BETWEEN :startTime AND :endTime " +
             "AND (:uris IS NULL OR e.uri IN :uris) " +

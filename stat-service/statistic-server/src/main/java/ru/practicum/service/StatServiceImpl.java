@@ -1,12 +1,12 @@
-package app.service;
+package ru.practicum.service;
 
-import app.model.EndpointHit;
-import app.repository.StatRepository;
+import ru.practicum.model.EndpointHit;
+import ru.practicum.repository.StatRepository;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import model.EndpointHitDto;
-import model.ViewStats;
+import ru.practicum.model.EndpointHitDto;
+import ru.practicum.model.ViewStats;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
