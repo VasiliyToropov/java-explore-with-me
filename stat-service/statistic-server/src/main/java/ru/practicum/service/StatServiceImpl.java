@@ -53,6 +53,11 @@ public class StatServiceImpl implements StatService {
 
         log.info("Получение статистики использования эндпоинтов: {}", uris);
 
+        //Если unique не задано, то присваиваем false
+        if (unique == null) {
+            unique = false;
+        }
+
         if (unique) {
             return statRepository.getStatsUnique(startTime, endTime, uris);
         } else {
