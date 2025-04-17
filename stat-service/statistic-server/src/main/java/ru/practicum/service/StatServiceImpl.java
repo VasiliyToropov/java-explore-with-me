@@ -1,16 +1,15 @@
 package ru.practicum.service;
 
-import ru.practicum.exception.BadRequestException;
-import ru.practicum.model.EndpointHit;
-import ru.practicum.repository.StatRepository;
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.practicum.model.EndpointHitDto;
-import ru.practicum.model.ViewStats;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.exception.BadRequestException;
+import ru.practicum.model.EndpointHit;
+import ru.practicum.model.EndpointHitDto;
+import ru.practicum.model.ViewStats;
+import ru.practicum.repository.StatRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
