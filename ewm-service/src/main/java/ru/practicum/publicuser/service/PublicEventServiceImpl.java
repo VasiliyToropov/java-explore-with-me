@@ -45,9 +45,6 @@ public class PublicEventServiceImpl implements PublicEventService {
                                                      Integer size,
                                                      HttpServletRequest request) {
 
-        /*if (rangeStart == null) {
-            rangeStart = LocalDateTime.now().format(FORMATTER);
-        }*/
 
         //rangeStart не может быть позже rangeEnd
         if (rangeStart != null && rangeEnd != null) {
