@@ -1,5 +1,6 @@
 package ru.practicum.service;
 
+import ru.practicum.exception.BadRequestException;
 import ru.practicum.model.EndpointHit;
 import ru.practicum.repository.StatRepository;
 import jakarta.validation.ValidationException;
@@ -48,7 +49,7 @@ public class StatServiceImpl implements StatService {
 
         //Проверяем корректный диапазон времени
         if (startTime.isAfter(endTime) || startTime.isAfter(LocalDateTime.now())) {
-            throw new ValidationException("Указан неверный диапазон времени");
+            throw new BadRequestException("Некорректный диапазон времени");
         }
 
         log.info("Получение статистики использования эндпоинтов: {}", uris);
