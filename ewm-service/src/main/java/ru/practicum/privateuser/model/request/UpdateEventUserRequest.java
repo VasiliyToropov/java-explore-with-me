@@ -11,7 +11,6 @@ import ru.practicum.privateuser.model.location.Location;
 @Setter
 public class UpdateEventUserRequest {
 
-
     @Size(min = 20, max = 2000)
     private String annotation;
 
