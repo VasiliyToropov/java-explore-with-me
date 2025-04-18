@@ -8,7 +8,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import ru.practicum.model.EndpointHit;
 import ru.practicum.model.EndpointHitDto;
 import ru.practicum.model.ViewStats;
 
@@ -27,7 +26,7 @@ public class StatClient {
                 .build();
     }
 
-    public EndpointHit postEndpointHit(EndpointHitDto endpointHitDto) {
+    public EndpointHitDto postEndpointHit(EndpointHitDto endpointHitDto) {
         String uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .path("/hit")
                 .build()
@@ -39,7 +38,7 @@ public class StatClient {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(endpointHitDto)
                 .retrieve()
-                .body(EndpointHit.class);
+                .body(EndpointHitDto.class);  // Десериализуем в DTO
     }
 
     public List<ViewStats> getStats(String start, String end, List<String> uris, boolean unique) {
