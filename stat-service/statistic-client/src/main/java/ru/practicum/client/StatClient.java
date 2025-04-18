@@ -51,7 +51,7 @@ public class StatClient {
                 .queryParam("unique", unique)
                 .toUriString();
 
-        log.info("GET request to URI: {}", fullUri);
+        log.info("GET to URI: {}", fullUri);
 
         try {
             return restClient.get()
