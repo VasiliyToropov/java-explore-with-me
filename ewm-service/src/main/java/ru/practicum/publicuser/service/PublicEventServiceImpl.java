@@ -3,7 +3,6 @@ package ru.practicum.publicuser.service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +26,8 @@ import java.util.*;
 public class PublicEventServiceImpl implements PublicEventService {
 
     private final PublicEventRepository eventRepository;
+
+    private final StatClient statClient;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     //Хранилище для хранения уникальных id для каждого события
@@ -100,10 +101,6 @@ public class PublicEventServiceImpl implements PublicEventService {
 
         EndpointHitDto endpointHitDto = new EndpointHitDto(app, uri, ip, now);
 
-        RestTemplateBuilder builder = new RestTemplateBuilder();
-
-        StatClient statClient = new StatClient(builder);
-
         statClient.postEndpointHit(endpointHitDto);
     }
 
@@ -120,7 +117,6 @@ public class PublicEventServiceImpl implements PublicEventService {
             event.setViews(event.getViews() + 1);
             ipsForEvent.add(ip);
             eventRepository.save(event);
-
         }
     }
 }

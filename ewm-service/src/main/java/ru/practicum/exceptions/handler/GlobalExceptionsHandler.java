@@ -16,7 +16,7 @@ import ru.practicum.exceptions.model.ApiError;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
-public class ExceptionsHandler {
+public class GlobalExceptionsHandler {
 
     //400 BAD REQUEST
     @ExceptionHandler({
