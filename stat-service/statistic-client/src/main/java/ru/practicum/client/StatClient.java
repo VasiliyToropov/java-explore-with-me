@@ -6,14 +6,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.model.EndpointHit;
 import ru.practicum.model.EndpointHitDto;
 import ru.practicum.model.ViewStats;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -21,7 +19,6 @@ import java.util.List;
 public class StatClient {
     private final RestClient restClient;
     private final String baseUrl;
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public StatClient(@Value("${stats-server.url}") String baseUrl) {
         this.baseUrl = baseUrl;
