@@ -18,10 +18,7 @@ import ru.practicum.publicuser.repository.PublicEventRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -31,7 +28,9 @@ public class PublicEventServiceImpl implements PublicEventService {
 
     private final PublicEventRepository eventRepository;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private final Set<String> uniqueIps = new HashSet<>();
+
+    //Хранилище для хранения уникальных id для каждого события
+    private final Map<Long, Set<String>> uniqueIdsForEvents = new HashMap<>();
 
     @Override
     public List<EventShortDto> getEventsByPublicUser(String text,
@@ -82,15 +81,7 @@ public class PublicEventServiceImpl implements PublicEventService {
         }
 
         //Добавляем просмотр для уникального IP
-        String ip = request.getRemoteAddr();
-
-        if (!uniqueIps.contains(ip)) {
-            int views = event.getViews() + 1;
-            event.setViews(views);
-            uniqueIps.add(ip);
-            eventRepository.save(event);
-        }
-
+        addViewToEvent(event, request);
 
         //Отправляем статистику
         sendStatistic(request);
@@ -114,5 +105,22 @@ public class PublicEventServiceImpl implements PublicEventService {
         StatClient statClient = new StatClient(builder);
 
         statClient.postEndpointHit(endpointHitDto);
+    }
+
+    public void addViewToEvent(Event event, HttpServletRequest request) {
+
+        String ip = request.getRemoteAddr();
+        Long eventId = event.getId();
+
+        // Получаем или создаем набор уникальных IP для данного события
+        Set<String> ipsForEvent = uniqueIdsForEvents.computeIfAbsent(eventId, k -> new HashSet<>());
+
+        // Если IP еще нет в наборе, увеличиваем счетчик просмотров
+        if (!ipsForEvent.contains(ip)) {
+            event.setViews(event.getViews() + 1);
+            ipsForEvent.add(ip);
+            eventRepository.save(event);
+
+        }
     }
 }
