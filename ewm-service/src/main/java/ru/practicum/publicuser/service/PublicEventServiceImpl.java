@@ -26,11 +26,8 @@ import java.util.*;
 public class PublicEventServiceImpl implements PublicEventService {
 
     private final PublicEventRepository eventRepository;
-
     private final StatClient statClient;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-    //Хранилище для хранения уникальных id для каждого события
     private final Map<Long, Set<String>> uniqueIdsForEvents = new HashMap<>();
 
     @Override
@@ -45,8 +42,50 @@ public class PublicEventServiceImpl implements PublicEventService {
                                                      Integer size,
                                                      HttpServletRequest request) {
 
+        validateDateRange(rangeStart, rangeEnd);
 
-        //rangeStart не может быть позже rangeEnd
+        Pageable pageable = PageRequest.of(
+                (from == null) ? 0 : from / ((size == null) ? 10 : size),
+                (size == null) ? 10 : size
+        );
+
+        sendStatistic(request);
+        log.info("Получили список событий с выборкой");
+
+        List<EventShortDto> events = eventRepository.getEventsByPublicUser(
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageable
+        );
+
+        // Добавляем просмотры для каждого события с уникальным ip
+        String ip = request.getRemoteAddr();
+        events.forEach(eventDto -> {
+            Event event = eventRepository.findById(eventDto.getId())
+                    .orElseThrow(() -> new NotFoundException("Event with id=" + eventDto.getId() + " not found"));
+            addViewToEvent(event, ip);
+            // Обновляем views в DTO
+            eventDto.setViews(event.getViews());
+        });
+
+        return events;
+    }
+
+    @Override
+    public Event getEventById(Long id, HttpServletRequest request) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + id + " was not found"));
+
+        if (event.getState() != Event.State.PUBLISHED) {
+            throw new NotFoundException("Event with id=" + id + " was not published");
+        }
+
+        addViewToEvent(event, request.getRemoteAddr());
+        sendStatistic(request);
+        log.info("Получили событие с id: {}", id);
+
+        return event;
+    }
+
+    private void validateDateRange(String rangeStart, String rangeEnd) {
         if (rangeStart != null && rangeEnd != null) {
             LocalDateTime start = LocalDateTime.parse(rangeStart, FORMATTER);
             LocalDateTime end = LocalDateTime.parse(rangeEnd, FORMATTER);
@@ -54,69 +93,33 @@ public class PublicEventServiceImpl implements PublicEventService {
                 throw new BadRequestException("rangeStart не может быть позже rangeEnd");
             }
         }
-
-        // Если from и size не заданы, то устанавливаем значения по умолчанию
-        int defaultFrom = (from == null) ? 0 : from;
-        int defaultSize = (size == null) ? 10 : size;
-
-        Pageable pageable = PageRequest.of(defaultFrom / defaultSize, defaultSize);
-
-        //Отправляем статистику
-        sendStatistic(request);
-
-        log.info("Получили список событий с выборкой");
-
-        return eventRepository.getEventsByPublicUser(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageable);
     }
 
-    @Override
-    public Event getEventById(Long id, HttpServletRequest request) {
+    private void sendStatistic(HttpServletRequest request) {
 
-        Optional<Event> foundedEvent = eventRepository.findById(id);
+        String now = LocalDateTime.now().format(FORMATTER);
 
-        Event event = foundedEvent.orElseThrow(() -> new NotFoundException("Event with id=" + id + " was not found"));
-
-        //Если событие недоступно
-        if (event.getState() != Event.State.PUBLISHED) {
-            throw new NotFoundException("Event with id=" + id + " was not published");
-        }
-
-        //Добавляем просмотр для уникального IP
-        addViewToEvent(event, request);
-
-        //Отправляем статистику
-        sendStatistic(request);
-
-        log.info("Получили событие с id: {}", id);
-
-        return event;
-    }
-
-    //Формируем статистику и отправляем в клиент
-    public void sendStatistic(HttpServletRequest request) {
-        String app = "ewm-main-service";
-        String ip = request.getRemoteAddr();
-        String uri = request.getRequestURI();
-        LocalDateTime now = LocalDateTime.now();
-
-        EndpointHitDto endpointHitDto = new EndpointHitDto(app, uri, ip, now);
-
+        EndpointHitDto endpointHitDto = new EndpointHitDto(
+                "ewm-main-service",
+                request.getRequestURI(),
+                request.getRemoteAddr(),
+                LocalDateTime.parse(now, FORMATTER)
+        );
         statClient.postEndpointHit(endpointHitDto);
     }
 
-    public void addViewToEvent(Event event, HttpServletRequest request) {
+    private void addViewToEvent(Event event, String ip) {
+        Set<String> ipsForEvent = uniqueIdsForEvents.computeIfAbsent(event.getId(), k -> new HashSet<>());
 
-        String ip = request.getRemoteAddr();
-        Long eventId = event.getId();
-
-        // Получаем или создаем набор уникальных IP для данного события
-        Set<String> ipsForEvent = uniqueIdsForEvents.computeIfAbsent(eventId, k -> new HashSet<>());
-
-        // Если IP еще нет в наборе, увеличиваем счетчик просмотров
         if (!ipsForEvent.contains(ip)) {
             event.setViews(event.getViews() + 1);
             ipsForEvent.add(ip);
             eventRepository.save(event);
         }
+    }
+
+    // Перегруженный метод для работы с IP напрямую
+    private void addViewToEvent(Event event, HttpServletRequest request) {
+        addViewToEvent(event, request.getRemoteAddr());
     }
 }
