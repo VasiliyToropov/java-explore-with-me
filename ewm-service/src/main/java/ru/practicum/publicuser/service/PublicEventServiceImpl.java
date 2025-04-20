@@ -103,7 +103,7 @@ public class PublicEventServiceImpl implements PublicEventService {
                 "ewm-main-service",
                 request.getRequestURI(),
                 request.getRemoteAddr(),
-                LocalDateTime.parse(now, FORMATTER)
+                now
         );
         statClient.postEndpointHit(endpointHitDto);
     }

@@ -32,7 +32,7 @@ public class StatServiceImpl implements StatService {
         endpointHit.setApp(endpointHitDto.getApp());
         endpointHit.setIp(endpointHitDto.getIp());
         endpointHit.setUri(endpointHitDto.getUri());
-        endpointHit.setTimestamp(endpointHitDto.getTimestamp());
+        endpointHit.setTimestamp(LocalDateTime.parse(endpointHitDto.getTimestamp(), FORMATTER));
 
         statRepository.save(endpointHit);
 
