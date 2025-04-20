@@ -49,13 +49,24 @@ public class PublicEventServiceImpl implements PublicEventService {
                 (size == null) ? 10 : size
         );
 
-
         sendStatistic(request);
-
         log.info("Получили список событий с выборкой");
 
-        return eventRepository.getEventsByPublicUser(
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageable);
+        List<EventShortDto> events = eventRepository.getEventsByPublicUser(
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageable
+        );
+
+        // Добавляем просмотры для каждого события с уникальным ip
+        String ip = request.getRemoteAddr();
+        events.forEach(eventDto -> {
+            Event event = eventRepository.findById(eventDto.getId())
+                    .orElseThrow(() -> new NotFoundException("Event with id=" + eventDto.getId() + " not found"));
+            addViewToEvent(event, ip);
+            // Обновляем views в DTO
+            eventDto.setViews(event.getViews());
+        });
+
+        return events;
     }
 
     @Override
@@ -67,15 +78,13 @@ public class PublicEventServiceImpl implements PublicEventService {
             throw new NotFoundException("Event with id=" + id + " was not published");
         }
 
-        addViewToEvent(event, request);
+        addViewToEvent(event, request.getRemoteAddr());
         sendStatistic(request);
         log.info("Получили событие с id: {}", id);
 
         return event;
     }
 
-
-    // Проверяем rangeStart,rangeEnd
     private void validateDateRange(String rangeStart, String rangeEnd) {
         if (rangeStart != null && rangeEnd != null) {
             LocalDateTime start = LocalDateTime.parse(rangeStart, FORMATTER);
@@ -86,27 +95,31 @@ public class PublicEventServiceImpl implements PublicEventService {
         }
     }
 
-
-    //Отправляем статистику на клиент
     private void sendStatistic(HttpServletRequest request) {
+
+        String now = LocalDateTime.now().format(FORMATTER);
+
         EndpointHitDto endpointHitDto = new EndpointHitDto(
                 "ewm-main-service",
                 request.getRequestURI(),
                 request.getRemoteAddr(),
-                LocalDateTime.now()
+                LocalDateTime.parse(now, FORMATTER)
         );
         statClient.postEndpointHit(endpointHitDto);
     }
 
-    //Добавляем просмотр к событию
+    private void addViewToEvent(Event event, String ip) {
+        Set<String> ipsForEvent = uniqueIdsForEvents.computeIfAbsent(event.getId(), k -> new HashSet<>());
+
+        if (!ipsForEvent.contains(ip)) {
+            event.setViews(event.getViews() + 1);
+            ipsForEvent.add(ip);
+            eventRepository.save(event);
+        }
+    }
+
+    // Перегруженный метод для работы с IP напрямую
     private void addViewToEvent(Event event, HttpServletRequest request) {
-        String ip = request.getRemoteAddr();
-        Long eventId = event.getId();
-
-        uniqueIdsForEvents.computeIfAbsent(eventId, k -> new HashSet<>())
-                .add(ip);
-
-        event.setViews(event.getViews() + 1);
-        eventRepository.save(event);
+        addViewToEvent(event, request.getRemoteAddr());
     }
 }
