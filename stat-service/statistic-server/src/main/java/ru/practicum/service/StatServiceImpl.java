@@ -1,15 +1,15 @@
 package ru.practicum.service;
 
-import ru.practicum.model.EndpointHit;
-import ru.practicum.repository.StatRepository;
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.practicum.model.EndpointHitDto;
-import ru.practicum.model.ViewStats;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.exception.BadRequestException;
+import ru.practicum.model.EndpointHit;
+import ru.practicum.model.EndpointHitDto;
+import ru.practicum.model.ViewStats;
+import ru.practicum.repository.StatRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +32,7 @@ public class StatServiceImpl implements StatService {
         endpointHit.setApp(endpointHitDto.getApp());
         endpointHit.setIp(endpointHitDto.getIp());
         endpointHit.setUri(endpointHitDto.getUri());
-        endpointHit.setTimestamp(endpointHitDto.getTimestamp());
+        endpointHit.setTimestamp(LocalDateTime.parse(endpointHitDto.getTimestamp(), FORMATTER));
 
         statRepository.save(endpointHit);
 
@@ -48,7 +48,7 @@ public class StatServiceImpl implements StatService {
 
         //Проверяем корректный диапазон времени
         if (startTime.isAfter(endTime) || startTime.isAfter(LocalDateTime.now())) {
-            throw new ValidationException("Указан неверный диапазон времени");
+            throw new BadRequestException("Некорректный диапазон времени");
         }
 
         log.info("Получение статистики использования эндпоинтов: {}", uris);

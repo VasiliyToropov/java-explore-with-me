@@ -1,93 +1,73 @@
 package ru.practicum.client;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.model.EndpointHitDto;
 import ru.practicum.model.ViewStats;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.*;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.util.List;
-import java.util.Map;
 
-@Service
+@Slf4j
+@Component
 public class StatClient {
+    private final RestClient restClient;
+    private final String baseUrl;
 
-    private final RestTemplate rest;
-    private static final String postEndpointHitPath = "/hit";
-    private static final String getStatsPath = "/stats";
-
-    @Autowired
-    public StatClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
-        rest = builder
-                .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
-                .requestFactory(() -> new HttpComponentsClientHttpRequestFactory())
+    public StatClient(@Value("${stats-server.url}") String baseUrl) {
+        this.baseUrl = baseUrl;
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
                 .build();
-
     }
 
-    public ResponseEntity<Object> postEndpointHit(@Nullable EndpointHitDto endpointHitDto) {
-        HttpEntity<EndpointHitDto> requestEntity = new HttpEntity<>(endpointHitDto, defaultHeaders());
+    public EndpointHitDto postEndpointHit(EndpointHitDto endpointHitDto) {
+        String uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .path("/hit")
+                .build()
+                .toUriString();
+        log.info("POST to URI: {}", uri);
 
-        ResponseEntity<Object> statServerResponse;
+        return restClient.post()
+                .uri(uri)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(endpointHitDto)
+                .retrieve()
+                .body(EndpointHitDto.class);  // Десериализуем в DTO
+    }
+
+    public List<ViewStats> getStats(String start, String end, List<String> uris, boolean unique) {
+        String fullUri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .path("/stats")
+                .queryParam("start", start)
+                .queryParam("end", end)
+                .queryParam("uris", uris)
+                .queryParam("unique", unique)
+                .toUriString();
+
+        log.info("GET to URI: {}", fullUri);
 
         try {
-            statServerResponse = rest.exchange(postEndpointHitPath, HttpMethod.POST, requestEntity, Object.class);
+            return restClient.get()
+                    .uri(fullUri)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                        throw new RuntimeException("Client error: " + res.getStatusCode());
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                        throw new RuntimeException("Server error: " + res.getStatusCode());
+                    })
+                    .body(new ParameterizedTypeReference<>() {
+                    });
 
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsByteArray());
+        } catch (Exception e) {
+            log.error("Error while getting stats", e);
+            return List.of();
         }
-        return prepareGatewayResponse(statServerResponse);
     }
-
-    public ResponseEntity<Object> getStats(String start, String end, List<String> uris, Boolean unique) {
-
-        Map<String, Object> parameters = Map.of(
-                "start", start,
-                "end", end,
-                "uris", uris,
-                "unique", unique
-        );
-
-        HttpEntity<List<ViewStats>> requestEntity = new HttpEntity<>(defaultHeaders());
-
-        ResponseEntity<Object> statServerResponse;
-        try {
-
-            statServerResponse = rest.exchange(getStatsPath, HttpMethod.GET, requestEntity, Object.class, parameters);
-
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsByteArray());
-        }
-        return prepareGatewayResponse(statServerResponse);
-    }
-
-    private HttpHeaders defaultHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        return headers;
-    }
-
-    private static ResponseEntity<Object> prepareGatewayResponse(ResponseEntity<Object> response) {
-        if (response.getStatusCode().is2xxSuccessful()) {
-            return response;
-        }
-
-        ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(response.getStatusCode());
-
-        if (response.hasBody()) {
-            return responseBuilder.body(response.getBody());
-        }
-
-        return responseBuilder.build();
-    }
-
-
 }
