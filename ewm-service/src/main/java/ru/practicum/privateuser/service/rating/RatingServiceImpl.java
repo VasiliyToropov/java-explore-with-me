@@ -72,6 +72,7 @@ public class RatingServiceImpl implements RatingService {
         return event;
     }
 
+
     @Override
     public List<User> getMostActiveUsers() {
 
