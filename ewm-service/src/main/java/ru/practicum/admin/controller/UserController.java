@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.admin.model.request.NewUserRequest;
 import ru.practicum.admin.model.user.User;
 import ru.practicum.admin.service.user.UserService;
+import ru.practicum.privateuser.service.rating.RatingService;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final RatingService ratingService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -36,4 +38,12 @@ public class UserController {
                                @RequestParam(required = false) Integer size) {
         return userService.getUsers(ids, from, size);
     }
+
+    //Получение пользователей по их рейтингу (самые активные в начале)
+    @GetMapping("/active")
+    @ResponseStatus(HttpStatus.OK)
+    public List<User> getMostActiveUsers() {
+        return ratingService.getMostActiveUsers();
+    }
+
 }

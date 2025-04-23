@@ -63,6 +63,10 @@ public class Event {
 
     private int views;
 
+    private Long likes;
+
+    private Long dislikes;
+
     public enum State {
         PENDING, PUBLISHED, CANCELED
     }
