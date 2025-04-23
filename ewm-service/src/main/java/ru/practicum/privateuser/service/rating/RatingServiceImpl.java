@@ -67,7 +67,6 @@ public class RatingServiceImpl implements RatingService {
             event.setDislikes(event.getDislikes() + 1);
         }
 
-        //Обновляем БД
         eventRepository.save(event);
 
         return event;
