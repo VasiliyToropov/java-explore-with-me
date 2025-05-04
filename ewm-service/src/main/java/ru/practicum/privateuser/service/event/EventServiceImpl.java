@@ -88,6 +88,8 @@ public class EventServiceImpl implements EventService {
         event.setState(Event.State.PENDING);
         event.setTitle(newEventDto.getTitle());
         event.setViews(0);
+        event.setLikes(0L);
+        event.setDislikes(0L);
 
         log.info("Добавили новое событие с id: {}", event.getId());
 

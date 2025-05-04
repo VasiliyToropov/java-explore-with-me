@@ -88,7 +88,9 @@ public interface PublicEventRepository extends JpaRepository<Event, Long>, JpaSp
                 event.getInitiator(),
                 event.isPaid(),
                 event.getTitle(),
-                event.getViews()
+                event.getViews(),
+                event.getLikes(),
+                event.getDislikes()
         );
     }
 }
